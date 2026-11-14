@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""מחולל כיווני לוגו בסיסיים (SVG) מתוך שם עסק, צבע וסגנון. ספריית התקן בלבד."""
+"""מחולל לוגו (SVG ו-PNG אופציונלי) מתוך שם עסק, סמל, צבעים ופונט. ספריית התקן בלבד."""
 import argparse
 import re
 import sys
 from pathlib import Path
-from xml.sax.saxutils import escape
 
-FONT = "Assistant, 'Segoe UI', Arial, sans-serif"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from render import FONTS, Spec, build_all  # noqa: E402
+from symbols import SYMBOLS, suggest  # noqa: E402
+
 STYLES = ("circle", "square", "rounded")
 
 
@@ -16,63 +19,10 @@ def valid_color(value):
     return value
 
 
-def mark(style, color, glyph, glyph_color, cx, cy, size):
-    r = size / 2
-    if style == "circle":
-        shape = f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{color}"/>'
-    elif style == "square":
-        shape = f'<rect x="{cx - r}" y="{cy - r}" width="{size}" height="{size}" fill="{color}"/>'
-    else:
-        shape = (f'<rect x="{cx - r}" y="{cy - r}" width="{size}" height="{size}" '
-                 f'rx="{size * 0.22}" fill="{color}"/>')
-    text = (f'<text x="{cx}" y="{cy + size * 0.18}" font-family="{FONT}" font-weight="700" '
-            f'font-size="{size * 0.56}" text-anchor="middle" fill="{glyph_color}">{escape(glyph)}</text>')
-    return shape + text
-
-
-def svg(width, height, body, bg=None, label=""):
-    rect = f'<rect width="{width}" height="{height}" fill="{bg}"/>' if bg else ""
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
-            f'width="{width}" height="{height}" role="img" aria-label="{escape(label)}">'
-            f'{rect}{body}</svg>\n')
-
-
-def horizontal(name, style, fg, mark_fill, glyph_fill, bg):
-    glyph = name.strip()[0]
-    m = mark(style, mark_fill, glyph, glyph_fill, 90, 90, 120)
-    t = (f'<text x="170" y="108" font-family="{FONT}" font-weight="700" font-size="64" '
-         f'direction="rtl" fill="{fg}">{escape(name)}</text>')
-    width = 200 + 40 * len(name)
-    return svg(width, 180, m + t, bg, name)
-
-
-def stacked(name, style, fg, mark_fill, glyph_fill, bg):
-    glyph = name.strip()[0]
-    width = max(360, 60 + 36 * len(name))
-    m = mark(style, mark_fill, glyph, glyph_fill, width / 2, 100, 130)
-    t = (f'<text x="{width / 2}" y="250" font-family="{FONT}" font-weight="700" font-size="60" '
-         f'text-anchor="middle" direction="rtl" fill="{fg}">{escape(name)}</text>')
-    return svg(width, 300, m + t, bg, name)
-
-
-def wordmark(name, fg, bg):
-    width = 80 + 44 * len(name)
-    t = (f'<text x="{width / 2}" y="105" font-family="{FONT}" font-weight="800" font-size="72" '
-         f'text-anchor="middle" direction="rtl" fill="{fg}">{escape(name)}</text>')
-    return svg(width, 160, t, bg, name)
-
-
-def build(name, style, color, out_dir):
+def build(spec, out_dir):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    dark, light = "#111827", "#ffffff"
-    files = {
-        "horizontal.svg": horizontal(name, style, dark, color, light, None),
-        "stacked.svg": stacked(name, style, dark, color, light, None),
-        "wordmark.svg": wordmark(name, color, None),
-        "horizontal-on-dark.svg": horizontal(name, style, light, light, dark, dark),
-        "mono-black.svg": horizontal(name, style, "#000000", "#000000", light, None),
-    }
+    files = build_all(spec)
     for fname, content in files.items():
         (out / fname).write_text(content, encoding="utf-8")
     return sorted(files)
@@ -117,22 +67,62 @@ def render_png(out_dir, names):
     return made
 
 
+def write_preview(out_dir, names):
+    cells = "".join(f'<figure><img src="{n}" alt="{n}"><figcaption>{n}</figcaption></figure>'
+                    for n in names)
+    html = ('<!doctype html><meta charset="utf-8"><title>Logo preview</title>'
+            '<style>body{font-family:sans-serif;display:flex;flex-wrap:wrap;gap:24px;padding:24px}'
+            'figure{margin:0;padding:16px;border:1px solid #ccc;background:#fff}'
+            'img{max-width:420px;max-height:220px;display:block}'
+            'figcaption{font-size:12px;color:#555;margin-top:8px}</style>' + cells)
+    (Path(out_dir) / "preview.html").write_text(html, encoding="utf-8")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--name", required=True, help="שם העסק")
+    p.add_argument("--name", help="שם העסק")
+    p.add_argument("--tagline", default="", help="שורת משנה (אופציונלי)")
+    p.add_argument("--symbol", default="monogram",
+                   help="שם סמל מהספרייה (ראו --list-symbols) או monogram (אות פותחת)")
     p.add_argument("--color", type=valid_color, default="#2563eb", help="צבע ראשי #RRGGBB")
-    p.add_argument("--style", choices=STYLES, default="rounded")
-    p.add_argument("--out", required=True, help="תיקיית פלט")
+    p.add_argument("--accent", type=valid_color, default="#f59e0b", help="צבע משני #RRGGBB")
+    p.add_argument("--style", choices=STYLES, default="rounded", help="צורת מונוגרמה")
+    p.add_argument("--font", choices=sorted(FONTS), default="assistant")
+    p.add_argument("--out", help="תיקיית פלט")
     p.add_argument("--png", action="store_true", help="להפיק גם PNG (דורש Chrome או Edge)")
+    p.add_argument("--preview", action="store_true", help="ליצור preview.html להשוואה")
+    p.add_argument("--list-symbols", action="store_true", help="להציג את הסמלים הזמינים")
+    p.add_argument("--suggest", metavar="TEXT", help="הצעת סמלים, צבעים ופונט לפי תיאור התחום")
     a = p.parse_args(argv)
-    if not a.name.strip():
-        p.error("השם ריק")
-    names = build(a.name.strip(), a.style, a.color, a.out)
-    for f in names:
-        print(f)
+
+    if a.list_symbols:
+        print("\n".join(sorted(SYMBOLS)))
+        return 0
+    if a.suggest is not None:
+        found = suggest(a.suggest)
+        if not found:
+            print("לא נמצאה התאמה. נסו מילה כללית יותר או בחרו סמל ידנית.")
+            return 0
+        for f in found:
+            print(f"סמלים: {', '.join(f['symbols'])} | צבע: {f['color']} | משני: {f['accent']} "
+                  f"| פונט: {f['font']} | סגנון: {f['style']}")
+        return 0
+    if not a.name or not a.name.strip():
+        p.error("חובה --name לא ריק")
+    if not a.out:
+        p.error("חובה --out")
+    if a.symbol != "monogram" and a.symbol not in SYMBOLS:
+        p.error(f"סמל לא מוכר: {a.symbol}. ראו --list-symbols")
+
+    spec = Spec(a.name, a.tagline, a.symbol, a.style, a.color, a.accent, a.font)
+    names = build(spec, a.out)
+    shown = list(names)
     if a.png:
-        for f in render_png(a.out, names):
-            print(f)
+        shown += render_png(a.out, names)
+    if a.preview:
+        write_preview(a.out, [n for n in shown if n.endswith(".png")] or names)
+        shown.append("preview.html")
+    print("\n".join(shown))
     return 0
 
 
