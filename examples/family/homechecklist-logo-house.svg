@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true">
+  <defs>
+    <mask id="hc-cut" maskUnits="userSpaceOnUse" x="-100" y="-100" width="1310" height="1310"><rect x="-100" y="-100" width="1310" height="1310" fill="#fff"/><path d="M136 334L548 40L956 332V947H375" stroke="#000" stroke-width="148" stroke-linecap="round" stroke-linejoin="round" fill="none"/></mask>
+  </defs>
+  <g transform="translate(256 256) scale(0.4155) translate(-555 -553.5)">
+    <path d="M44 571L556 202L1066 569M156 491V1067H734" stroke="#1F497D" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" fill="none" mask="url(#hc-cut)"/>
+    <path d="M136 334L548 40L956 332V947H375" stroke="#008000" stroke-width="82" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>

@@ -31,6 +31,15 @@ python skills/spetz-logo-design/scripts/make_logo.py --name "שם העסק" --ta
 - לפני שימוש מסחרי יש לבדוק זמינות שם וסימן מסחרי.
 - הסקיל לא כולל ולא מפיץ לוגואים של מותגים.
 
+## דוגמאות: לוגואים של מערכות Trium Technology
+
+לוגואים של מערכות שלנו, לצורך הצגה בלבד. הם לא נוצרו בכלי הזה ואינם מורשים לשימוש חוזר, ראו [NOTICE](NOTICE).
+
+<table>
+<tr><td align="center"><img src="examples/family/SPETZ-spetz-logotype.png" width="120" alt="SPETZ"><br><sub>SPETZ</sub></td><td align="center"><img src="examples/family/trusted-zone-logo.svg" width="120" alt="trusted.zone"><br><sub>trusted.zone</sub></td><td align="center"><img src="examples/family/HeShe-heshe-logo.svg" width="120" alt="HeShe"><br><sub>HeShe</sub></td><td align="center"><img src="examples/family/homechecklist-logo.svg" width="120" alt="homechecklist"><br><sub>homechecklist</sub></td><td align="center"><img src="examples/family/homechecklist-logo-house.svg" width="120" alt="homechecklist (house)"><br><sub>homechecklist (house)</sub></td></tr>
+<tr><td align="center"><img src="examples/family/israelaw-icon-512.png" width="120" alt="israelaw"><br><sub>israelaw</sub></td><td align="center"><img src="examples/family/calcalan-icon-512.png" width="120" alt="calcalan"><br><sub>calcalan</sub></td><td align="center"><img src="examples/family/send2sign-icon-512x512.png" width="120" alt="send2sign"><br><sub>send2sign</sub></td><td align="center"><img src="examples/family/tipul-app-icon-512.png" width="120" alt="tipul.app"><br><sub>tipul.app</sub></td><td align="center"><img src="examples/family/botmesima-icon-512.png" width="120" alt="botmesima"><br><sub>botmesima</sub></td></tr>
+</table>
+
 ## רישיון
 
 הקוד ברישיון [MIT](LICENSE). השם והסימנים של Trium Technology שמורים, ראו [NOTICE](NOTICE).
